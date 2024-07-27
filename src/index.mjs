@@ -22,8 +22,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const allRoles = rarities.flatMap(e=>e.roles)
         if (interaction.member.roles.cache.some(x=> allRoles.includes(x.id))) return await interaction.reply({content:"you have some of the roles already",ephemeral:true})
         const randomRole = getRole();
-        interaction.member.roles.add(randomRole)
-        await interaction.reply({content:"Goodluck, the roles you have rolled are now added to you",ephemeral:true})
+        if (!randomRole.result) return await interaction.reply({content:`Sorry, but there are no roles supplied for that rarity yet.\nRarity drawn: **\`${randomRole.rarity}\`**`,ephemeral:true})
+        if (interaction.guild.roles.cache.has(randomRole.randomRole)){ 
+            if (interaction.guild.roles.cache.has(randomRole.roleType)) interaction.member.roles.add(randomRole.roleType)
+            interaction.member.roles.add(randomRole.randomRole)
+            return await interaction.reply({content:"Goodluck, the roles you have rolled are now added to you",ephemeral:true})
+        } else {
+            return await interaction.reply({content:`Sorry, but the role has been edited or removed\nRarity drawn: **\`${randomRole.rarity}\`**`,ephemeral:true})
+        }
+        
+        
     }
     if (!interaction.isChatInputCommand()) return;
     const command = interaction.client.commands.get(interaction.commandName)
