@@ -128,3 +128,18 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# MacOS development
+*.DS_Store
+
+# pm2 module
+.pm2
+
+# Logs
+.logs
+
+# Sensitive login information
+.env
+
+# Server Logs
+logs
