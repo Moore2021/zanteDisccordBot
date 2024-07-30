@@ -1,31 +1,104 @@
-export const rarities = [
-  {
-    "category": "MYTHIC",
-    "weight": .05,
-    "roles": ["1266829251982655528", "1266829337248796713", "1266829472523620445", "1266829431801122849", "1266829393880154235"],
-    "roleType": "1266828973984317490"
-  }, {
-    "category": "LEGENDARY",
-    "weight": .10,
-    "roles": ["1266829623405314100", "1266829655093018725", "1266829681206755439", "1266829716690702458", "1266829758230958101", "1266829797653352582", "1266829832000503941", "1266829870055292988", "1266829902317879307"],
-    "roleType": "1266829060902879283"
-  }, {
-    "category": "EPIC",
-    "weight": .15,
-    "roles": ["1266829936719696034", "1266830094131920906", "1266830126348501083", "1266830175363006515", "1266830204047986760", "1266830230937407572", "1266830266882592769", "1266830295311847444"],
-    "roleType": "1266829099658117140"
-  }, {
-    "category": "UNCOMMON",
-    "weight": .3,
-    "roles": [],
-    "roleType": "1266829175508041879"
-  }, {
-    "category": "COMMON",
-    "weight": .4,
-    "roles": [],
-    "roleType": "1266829217966985278"
-  }
-]
+// eslint-disable-next-line no-unused-vars
+import { Collection, Role } from "discord.js";
+import client from "../index.mjs";
+
+export function getRarities() {
+  const rarities = [
+    {
+      "category": `MYTHIC`,
+      "weight": .05,
+      "roles": getRoles(`MYTHIC`),
+      "roleType": `1266828973984317490`
+    }, {
+      "category": `LEGENDARY`,
+      "weight": .10,
+      "roles": getRoles(`LEGENDARY`),
+      "roleType": `1266829060902879283`
+    }, {
+      "category": `EPIC`,
+      "weight": .15,
+      "roles": getRoles(`EPIC`),
+      "roleType": `1266829099658117140`
+    }, {
+      "category": `UNCOMMON`,
+      "weight": .3,
+      "roles": getRoles(`UNCOMMON`),
+      "roleType": `1266829175508041879`
+    }, {
+      "category": `COMMON`,
+      "weight": .4,
+      "roles": getRoles(`COMMON`),
+      "roleType": `1266829217966985278`
+    }
+  ];
+  return rarities;
+}
+
+/**
+ * 
+ * @param {string} rarity 
+ * @returns {Collection<string,Role>}
+ */
+export function getRoles(rarity) {
+  const guild = client.guilds.cache.get(`1266504446943297690`);
+
+  const roleSections = {
+    MYTHIC_START: guild.roles.cache.get(`1266828973984317490`),
+    MYTHIC_END: guild.roles.cache.get(`1266858490157207777`),
+    LEGENDARY_START: guild.roles.cache.get(`1266829060902879283`),
+    LEGENDARY_END: guild.roles.cache.get(`1266858469005197372`),
+    EPIC_START: guild.roles.cache.get(`1266829099658117140`),
+    EPIC_END: guild.roles.cache.get(`1266858451888509068`),
+    UNCOMMON_START: guild.roles.cache.get(`1266829175508041879`),
+    UNCOMMON_END: guild.roles.cache.get(`1266858530019868765`),
+    COMMON_START: guild.roles.cache.get(`1266829217966985278`),
+    COMMON_END: guild.roles.cache.get(`1266858918374670336`),
+  };
+
+  /**
+   *
+   * @param {import("discord.js").RoleResolvable} roleToTest
+   * @param {import("discord.js").RoleResolvable} roleStart
+   * @param {import("discord.js").RoleResolvable} roleEnd
+   * @returns {import("discord.js").RoleResolvable | null}
+   */
+  const compare = (roleToTest, roleStart, roleEnd) => {
+    const start = belowStart(roleToTest, roleStart);
+    const end = aboveEnd(roleToTest, roleEnd);
+    if (start && end) return roleToTest;
+    return null;
+  };
+
+  const section = { start: `${rarity}_START`, end: `${rarity}_END` };
+
+  return guild.roles.cache.filter(role => compare(role, roleSections[section.start], roleSections[section.end]));
+}
+
+/**
+   * Negative number if the first role's position is lower (second role's is higher)
+   * @param {import("discord.js").RoleResolvable} role1
+   * @param {import("discord.js").RoleResolvable} role2
+   * @returns {boolean}
+   */
+export const belowStart = (role1, role2) => {
+  const guild = client.guilds.cache.get(`1266504446943297690`);
+  const test = guild.roles.comparePositions(role1, role2);
+  if (test < 0) return true;
+  return false;
+};
+
+/**
+   * Positive number if the first's is higher (second's is lower), 0 if equal
+   * @param {import("discord.js").RoleResolvable} role1
+   * @param {import("discord.js").RoleResolvable} role2
+   * @returns {boolean}
+   */
+export const aboveEnd = (role1, role2) => {
+  const guild = client.guilds.cache.get(`1266504446943297690`);
+  const test = guild.roles.comparePositions(role1, role2);
+  if (test > 0) return true;
+  return false;
+};
 
 /**
  * Picks the random item based on its weight.
@@ -43,11 +116,11 @@ export const rarities = [
  */
 export function weightedRandom(items, weights) {
   if (items.length !== weights.length) {
-    throw new Error('Items and weights must be of the same size');
+    throw new Error(`Items and weights must be of the same size`);
   }
 
   if (!items.length) {
-    throw new Error('Items must not be empty');
+    throw new Error(`Items must not be empty`);
   }
 
   // Preparing the cumulative weights array.
@@ -68,7 +141,7 @@ export function weightedRandom(items, weights) {
   const randomNumber = maxCumulativeWeight * Math.random();
 
   // Picking the random item based on its weight.
-  // The items with higher weight will be picked more often.
+  // The items with higher weight will be picked more often. 
   for (let itemIndex = 0; itemIndex < items.length; itemIndex += 1) {
     if (cumulativeWeights[itemIndex] >= randomNumber) {
       return {
@@ -78,21 +151,24 @@ export function weightedRandom(items, weights) {
     }
   }
 }
+
 /**
  * @param {boolean} result
  * @param {import("discord.js").RoleResolvable} randomRole
  * Return a random role id based on weights
- * @returns {object} result
+ * @returns {{result:boolean,randomRole:Role,roleType:import("discord.js").RoleResolvable,rarity:string}} result
  */
 export default function getRole() {
+  const rarities = getRarities();
   const rare = rarities.map(e => e.category);
   const weight = rarities.map(e => e.weight);
-  const weightsAdded = weight.reduce((partialSum, a) => partialSum + a, 0)
-  if (weightsAdded>1) throw Error(`Weights are inconsistent and need to be adjusted`)
-  const weights = weight.map(w=>w*100)
+  const weightsAdded = weight.reduce((partialSum, a) => partialSum + a, 0);
+  if (weightsAdded > 1) throw Error(`Weights are inconsistent and need to be adjusted`);
+  const weights = weight.map(w => w * 100);
   const result = weightedRandom(rare, weights);
-  const roles = rarities[result.index].roles;
-  if (roles.length < 1) return { result: false, rarity: result.item }
-  const randomRole = roles[Math.floor(Math.random() * roles.length)];
-  return { result: true, randomRole: randomRole, roleType: rarities[result.index].roleType, rarity: result.item };
+  const roles = getRoles(result.item);
+  if (roles.size < 1) return { result: false, rarity: result.item };
+  const role = Array.from(roles);
+  const randomRole = role[Math.floor(Math.random() * role.length)];
+  return { result: true, randomRole: randomRole[0], roleType: rarities[result.index].roleType, rarity: result.item };
 }

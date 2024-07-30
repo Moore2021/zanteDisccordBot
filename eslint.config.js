@@ -6,9 +6,11 @@ export default [
   {
     languageOptions: { globals: globals.node },
     rules: {
-      "no-unused-vars": "warn",
-      "no-undef": "warn"
-  }
+      "no-unused-vars": "error",
+      "no-undef": "error",
+      "semi": "error",
+      "quotes": ["error", "backtick"]
+    }
   },
-    pluginJs.configs.recommended,
-];
+  pluginJs.configs.recommended,
+]; 
