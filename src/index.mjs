@@ -37,41 +37,42 @@ client.on(Events.GuildMemberAdd, async (member) => {
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton()) {
+        await interaction.deferReply({ ephemeral: true })
         const guild = interaction.guild;
         if (interaction.customId === `gachaAddictButton`) {
-            if (!guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.reply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });
+            if (!guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.editReply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });
             const randomRole = getRole(guild);
-            if (!randomRole.result) return await interaction.reply({ content: `Sorry, but there are no roles supplied for that rarity yet.\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
+            if (!randomRole.result) return await interaction.editReply({ content: `Sorry, but there are no roles supplied for that rarity yet.\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
             const roleId = randomRole.randomRole;
             if (guild.roles.cache.has(roleId)) {
                 const role = guild.roles.cache.get(roleId);
-                return await interaction.reply({ content: `**Role drawn: \`${randomRole.rarity}\`**\n**Role drawn: \`${role.name}\`**`, ephemeral: true });
+                return await interaction.editReply({ content: `**Role drawn: \`${randomRole.rarity}\`**\n**Role drawn: \`${role.name}\`**`, ephemeral: true });
             } else {
-                return await interaction.reply({ content: `Sorry, but the role has been edited or removed\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
+                return await interaction.editReply({ content: `Sorry, but the role has been edited or removed\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
             }
         }
         if (interaction.customId != `rollRandom`) return;
 
         const userAlreadyAssigned = await roleAssigned(interaction.member.id);
-        if (userAlreadyAssigned) return await interaction.reply({ content: `Please ask to be reset as you already have been assigned a role.`, ephemeral: true });
-        if (!guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.reply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });
+        if (userAlreadyAssigned) return await interaction.editReply({ content: `Please ask to be reset as you already have been assigned a role.`, ephemeral: true });
+        if (!guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.editReply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });
         const randomRole = getRole(guild);
         const allRoles = getRarities(guild).flatMap(e => e.roles);
         const allRoleIds = new Collection(allRoles.reduce((a, c) => a.concat([...c]), [])).map(r => r.id);
-        if (interaction.member.roles.cache.some(x => allRoleIds.includes(x.id))) return await interaction.reply({ content: `you have some of the roles already`, ephemeral: true });
-        if (!randomRole.result) return await interaction.reply({ content: `Sorry, but there are no roles supplied for that rarity yet.\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
+        if (interaction.member.roles.cache.some(x => allRoleIds.includes(x.id))) return await interaction.editReply({ content: `you have some of the roles already`, ephemeral: true });
+        if (!randomRole.result) return await interaction.editReply({ content: `Sorry, but there are no roles supplied for that rarity yet.\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
         const roleId = randomRole.randomRole;
         if (guild.roles.cache.has(roleId)) {
             const role = guild.roles.cache.get(roleId);
             const botsHighestRole = guild.members.me.roles.highest;
             const roleLowerThanHighest = belowStart(roleId, botsHighestRole, guild);
-            if (!roleLowerThanHighest) return await interaction.reply({ content: `Sorry, but the role couldn't be added, please let the owner know the bot's role needs to be higher\n**Role drawn: \`${role.name}\`**`, ephemeral: true });
+            if (!roleLowerThanHighest) return await interaction.editReply({ content: `Sorry, but the role couldn't be added, please let the owner know the bot's role needs to be higher\n**Role drawn: \`${role.name}\`**`, ephemeral: true });
             interaction.member.roles.add(roleId);
             const result = await updateRecord(interaction.member.id, roleId);
             if (!result) console.error(`Record not added to database for user: ${interaction.member.id} with roll: ${roleId}`);
-            return await interaction.reply({ content: `Goodluck, the roles you have rolled are now added to you`, ephemeral: true });
+            return await interaction.editReply({ content: `Goodluck, the roles you have rolled are now added to you`, ephemeral: true });
         } else {
-            return await interaction.reply({ content: `Sorry, but the role has been edited or removed\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
+            return await interaction.editReply({ content: `Sorry, but the role has been edited or removed\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
         }
     }
     if (!interaction.isChatInputCommand()) return;
