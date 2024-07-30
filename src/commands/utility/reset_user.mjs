@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
-import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits, Collection } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits, Collection, Guild } from "discord.js";
 import { resetUser } from "../../libs/database.mjs";
-import { getRarities, belowStart } from "../../configs/roles.mjs";
+import { getRoles, belowStart } from "../../libs/getRoles.mjs";
 
 export const data = new SlashCommandBuilder()
     .setName(`reset_user`)
@@ -26,12 +26,20 @@ export async function execute(interaction) {
     if (!hasPermission) return interaction.editReply({ content: `I current dont have permission to add role to user`, ephemeral: true });
     const result = await resetUser(userId);
     if (!result) return interaction.editReply({ content: `I was unable to reset the user.`, ephemeral: true });
-    const allRoles = getRarities().flatMap(e => e.roles);
-    const allRoleIds = new Collection(allRoles.reduce((a, c) => a.concat([...c]), [])).map(r => r.id);
+
+    const MYTHIC = getRoles(`MYTHIC`, interaction.guild);
+    const LEGENDARY = getRoles(`LEGENDARY`, interaction.guild);
+    const EPIC = getRoles(`EPIC`, interaction.guild);
+    const UNCOMMON = getRoles(`UNCOMMON`, interaction.guild);
+    const COMMON = getRoles(`COMMON`, interaction.guild);
+    const allRoles = new Collection([...MYTHIC, ...LEGENDARY, ...EPIC, ...UNCOMMON, ...COMMON]);
+    const allRoleIds = allRoles.map(r => r.id);
     const botsHighestRole = interaction.guild.members.me.roles.highest;
-    const roleLowerThanHighest = belowStart(allRoleIds[0], botsHighestRole);
+    const roleLowerThanHighest = belowStart(allRoleIds[0], botsHighestRole, interaction.guild);
     const role = interaction.guild.roles.cache.get(allRoleIds[0]);
-    if (!roleLowerThanHighest) return await interaction.reply({ content: `Sorry, but the role couldn't be added, please let the owner know the bot's role needs to be higher\n**Role drawn: \`${role.name}\`**`, ephemeral: true });
-    user.roles.remove(allRoleIds);
-    return;
+    if (!roleLowerThanHighest) return interaction.editReply({ content: `Sorry, but the role couldn't be added, please let the owner know the bot's role needs to be higher\n**Role drawn: \`${role.name}\`**`, ephemeral: true });
+    const userRoleIds = user.roles.cache.map(r => r.id);
+    if (userRoleIds.some(r => allRoleIds.indexOf(r) != -1)) user.roles.remove(allRoleIds);
+    return interaction.editReply(`user has been reset`);
 }
+

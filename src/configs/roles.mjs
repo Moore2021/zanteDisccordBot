@@ -1,104 +1,39 @@
 // eslint-disable-next-line no-unused-vars
-import { Collection, Role } from "discord.js";
-import client from "../index.mjs";
+import { Role } from "discord.js";
+import { getRoles } from "../libs/getRoles.mjs";
 
-export function getRarities() {
+export function getRarities(guild) {
+
   const rarities = [
     {
       "category": `MYTHIC`,
       "weight": .05,
-      "roles": getRoles(`MYTHIC`),
+      "roles": getRoles(`MYTHIC`, guild),
       "roleType": `1266828973984317490`
     }, {
       "category": `LEGENDARY`,
       "weight": .10,
-      "roles": getRoles(`LEGENDARY`),
+      "roles": getRoles(`LEGENDARY`, guild),
       "roleType": `1266829060902879283`
     }, {
       "category": `EPIC`,
       "weight": .15,
-      "roles": getRoles(`EPIC`),
+      "roles": getRoles(`EPIC`, guild),
       "roleType": `1266829099658117140`
     }, {
       "category": `UNCOMMON`,
       "weight": .3,
-      "roles": getRoles(`UNCOMMON`),
+      "roles": getRoles(`UNCOMMON`, guild),
       "roleType": `1266829175508041879`
     }, {
       "category": `COMMON`,
       "weight": .4,
-      "roles": getRoles(`COMMON`),
+      "roles": getRoles(`COMMON`, guild),
       "roleType": `1266829217966985278`
     }
   ];
   return rarities;
 }
-
-/**
- * 
- * @param {string} rarity 
- * @returns {Collection<string,Role>}
- */
-export function getRoles(rarity) {
-  const guild = client.guilds.cache.get(`1266504446943297690`);
-
-  const roleSections = {
-    MYTHIC_START: guild.roles.cache.get(`1266828973984317490`),
-    MYTHIC_END: guild.roles.cache.get(`1266858490157207777`),
-    LEGENDARY_START: guild.roles.cache.get(`1266829060902879283`),
-    LEGENDARY_END: guild.roles.cache.get(`1266858469005197372`),
-    EPIC_START: guild.roles.cache.get(`1266829099658117140`),
-    EPIC_END: guild.roles.cache.get(`1266858451888509068`),
-    UNCOMMON_START: guild.roles.cache.get(`1266829175508041879`),
-    UNCOMMON_END: guild.roles.cache.get(`1266858530019868765`),
-    COMMON_START: guild.roles.cache.get(`1266829217966985278`),
-    COMMON_END: guild.roles.cache.get(`1266858918374670336`),
-  };
-
-  /**
-   *
-   * @param {import("discord.js").RoleResolvable} roleToTest
-   * @param {import("discord.js").RoleResolvable} roleStart
-   * @param {import("discord.js").RoleResolvable} roleEnd
-   * @returns {import("discord.js").RoleResolvable | null}
-   */
-  const compare = (roleToTest, roleStart, roleEnd) => {
-    const start = belowStart(roleToTest, roleStart);
-    const end = aboveEnd(roleToTest, roleEnd);
-    if (start && end) return roleToTest;
-    return null;
-  };
-
-  const section = { start: `${rarity}_START`, end: `${rarity}_END` };
-
-  return guild.roles.cache.filter(role => compare(role, roleSections[section.start], roleSections[section.end]));
-}
-
-/**
-   * Negative number if the first role's position is lower (second role's is higher)
-   * @param {import("discord.js").RoleResolvable} role1
-   * @param {import("discord.js").RoleResolvable} role2
-   * @returns {boolean}
-   */
-export const belowStart = (role1, role2) => {
-  const guild = client.guilds.cache.get(`1266504446943297690`);
-  const test = guild.roles.comparePositions(role1, role2);
-  if (test < 0) return true;
-  return false;
-};
-
-/**
-   * Positive number if the first's is higher (second's is lower), 0 if equal
-   * @param {import("discord.js").RoleResolvable} role1
-   * @param {import("discord.js").RoleResolvable} role2
-   * @returns {boolean}
-   */
-export const aboveEnd = (role1, role2) => {
-  const guild = client.guilds.cache.get(`1266504446943297690`);
-  const test = guild.roles.comparePositions(role1, role2);
-  if (test > 0) return true;
-  return false;
-};
 
 /**
  * Picks the random item based on its weight.
@@ -115,6 +50,7 @@ export const aboveEnd = (role1, role2) => {
  * @returns {{item: any, index: number}}
  */
 export function weightedRandom(items, weights) {
+
   if (items.length !== weights.length) {
     throw new Error(`Items and weights must be of the same size`);
   }
@@ -158,7 +94,8 @@ export function weightedRandom(items, weights) {
  * Return a random role id based on weights
  * @returns {{result:boolean,randomRole:Role,roleType:import("discord.js").RoleResolvable,rarity:string}} result
  */
-export default function getRole() {
+export default function getRole(guild) {
+
   const rarities = getRarities();
   const rare = rarities.map(e => e.category);
   const weight = rarities.map(e => e.weight);
@@ -166,7 +103,7 @@ export default function getRole() {
   if (weightsAdded > 1) throw Error(`Weights are inconsistent and need to be adjusted`);
   const weights = weight.map(w => w * 100);
   const result = weightedRandom(rare, weights);
-  const roles = getRoles(result.item);
+  const roles = getRoles(result.item, guild);
   if (roles.size < 1) return { result: false, rarity: result.item };
   const role = Array.from(roles);
   const randomRole = role[Math.floor(Math.random() * role.length)];

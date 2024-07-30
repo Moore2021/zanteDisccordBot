@@ -1,5 +1,5 @@
 import pool from "pg-pool";
-// import "dotenv/config";
+import "dotenv/config";
 import pkg from "pg";
 // eslint-disable-next-line no-unused-vars
 const { Query } = pkg;
@@ -18,7 +18,7 @@ const p = new pool({
     maxUses: 7500, // close (and replace) a connection after it has been used 7500 times (see below for discussion)
 });
 
-const client = await p.connect();
+
 
 // (async () => {
 //     const client = await p.connect();
@@ -41,6 +41,7 @@ const client = await p.connect();
  * @returns {Promise<Query>}
  */
 const query = async (text, values) => {
+    const client = await p.connect();
     let q;
     try {
         q = await p.query(text, values);

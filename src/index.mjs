@@ -1,8 +1,9 @@
 import { Client, IntentsBitField, Events, PermissionFlagsBits, Collection } from "discord.js";
 import { config } from "./configs/config.mjs";
 import { commands } from "./commands/commands.mjs";
-import { default as getRole, getRarities, belowStart } from "./configs/roles.mjs";
+import { default as getRole, getRarities } from "./configs/roles.mjs";
 import { default as query, updateRecord, validateUser } from "./libs/database.mjs";
+import { belowStart } from "./libs/getRoles.mjs";
 
 const client = new Client({
     intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.GuildMembers],
@@ -35,17 +36,18 @@ client.on(Events.GuildMemberAdd, async (member) => {
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton()) {
         if (interaction.customId != `rollRandom`) return;
-        if (!interaction.guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.reply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });
-        const randomRole = getRole();
-        const allRoles = getRarities().flatMap(e => e.roles);
+        const guild = interaction.guild;
+        if (!guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.reply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });
+        const randomRole = getRole(guild);
+        const allRoles = getRarities(guild).flatMap(e => e.roles);
         const allRoleIds = new Collection(allRoles.reduce((a, c) => a.concat([...c]), [])).map(r => r.id);
         if (interaction.member.roles.cache.some(x => allRoleIds.includes(x.id))) return await interaction.reply({ content: `you have some of the roles already`, ephemeral: true });
         if (!randomRole.result) return await interaction.reply({ content: `Sorry, but there are no roles supplied for that rarity yet.\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
         const roleId = randomRole.randomRole;
-        if (interaction.guild.roles.cache.has(roleId)) {
-            const role = interaction.guild.roles.cache.get(roleId);
-            const botsHighestRole = interaction.guild.members.me.roles.highest;
-            const roleLowerThanHighest = belowStart(roleId, botsHighestRole);
+        if (guild.roles.cache.has(roleId)) {
+            const role = guild.roles.cache.get(roleId);
+            const botsHighestRole = guild.members.me.roles.highest;
+            const roleLowerThanHighest = belowStart(roleId, botsHighestRole, guild);
             if (!roleLowerThanHighest) return await interaction.reply({ content: `Sorry, but the role couldn't be added, please let the owner know the bot's role needs to be higher\n**Role drawn: \`${role.name}\`**`, ephemeral: true });
             interaction.member.roles.add(roleId);
             const result = await updateRecord(interaction.member.id, roleId);
