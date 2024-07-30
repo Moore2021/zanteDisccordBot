@@ -96,7 +96,7 @@ export function weightedRandom(items, weights) {
  */
 export default function getRole(guild) {
 
-  const rarities = getRarities();
+  const rarities = getRarities(guild);
   const rare = rarities.map(e => e.category);
   const weight = rarities.map(e => e.weight);
   const weightsAdded = weight.reduce((partialSum, a) => partialSum + a, 0);

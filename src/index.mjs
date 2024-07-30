@@ -2,7 +2,7 @@ import { Client, IntentsBitField, Events, PermissionFlagsBits, Collection } from
 import { config } from "./configs/config.mjs";
 import { commands } from "./commands/commands.mjs";
 import { default as getRole, getRarities } from "./configs/roles.mjs";
-import { default as query, updateRecord, validateUser } from "./libs/database.mjs";
+import { default as query, roleAssigned, updateRecord, validateUser } from "./libs/database.mjs";
 import { belowStart } from "./libs/getRoles.mjs";
 
 const client = new Client({
@@ -18,25 +18,42 @@ client.once(Events.ClientReady, () => {
 });
 
 client.on(Events.GuildMemberAdd, async (member) => {
+
     const userExists = await validateUser(member.id);
     if (!userExists) return;
     if (!userExists.roll_assigned) return;
     if (!userExists.roll_id) return;
+    const guild = member.guild;
     const roleId = userExists.roll_id;
-    const hasPermission = member.guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles);
+    const hasPermission = guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles);
     if (!hasPermission) return;
-    const cacheHasRole = member.guild.roles.cache.has(roleId);
+    const cacheHasRole = guild.roles.cache.has(roleId);
     if (!cacheHasRole) return;
-    const botsHighestRole = member.guild.members.me.roles.highest;
-    const roleLowerThanHighest = belowStart(roleId, botsHighestRole);
+    const botsHighestRole = guild.members.me.roles.highest;
+    const roleLowerThanHighest = belowStart(roleId, botsHighestRole, guild);
     if (!roleLowerThanHighest) return;
     return member.roles.add(roleId);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton()) {
-        if (interaction.customId != `rollRandom`) return;
         const guild = interaction.guild;
+        if (interaction.customId === `gachaAddictButton`) {
+            if (!guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.reply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });
+            const randomRole = getRole(guild);
+            if (!randomRole.result) return await interaction.reply({ content: `Sorry, but there are no roles supplied for that rarity yet.\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
+            const roleId = randomRole.randomRole;
+            if (guild.roles.cache.has(roleId)) {
+                const role = guild.roles.cache.get(roleId);
+                return await interaction.reply({ content: `**Role drawn: \`${randomRole.rarity}\`**\n**Role drawn: \`${role.name}\`**`, ephemeral: true });
+            } else {
+                return await interaction.reply({ content: `Sorry, but the role has been edited or removed\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
+            }
+        }
+        if (interaction.customId != `rollRandom`) return;
+
+        const userAlreadyAssigned = await roleAssigned(interaction.member.id);
+        if (userAlreadyAssigned) return await interaction.reply({ content: `Please ask to be reset as you already have been assigned a role.`, ephemeral: true });
         if (!guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.reply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });
         const randomRole = getRole(guild);
         const allRoles = getRarities(guild).flatMap(e => e.roles);

@@ -64,11 +64,10 @@ export async function validateUser(user) {
     if (!user) throw TypeError(`Parameter "user" cannot be blank`);
     if (typeof user != `string`) throw TypeError(`Parameter "user" must be a string`);
     const sql = `INSERT INTO memberLog (user_id) SELECT $1::text WHERE NOT EXISTS (SELECT 1 FROM memberLog WHERE user_id = $1::text)`;
-    const result = await query(sql, [user]);
-    if (!result) return false;
+    await query(sql, [user]);
     const hasRoleSql = `SELECT * FROM memberLog WHERE user_id = $1::text`;
     const hasRoleResult = await query(hasRoleSql, [user]);
-    if (hasRoleResult) return false;
+    if (hasRoleResult.rowCount != 1) return false;
     return hasRoleResult.rows[0];
 }
 
@@ -84,6 +83,21 @@ export async function getRoleForUser(user) {
     const result = await query(sql, [user]);
     if (!result) return false;
     const record = result.rows[0].roll_id;
+    return record;
+}
+
+/**
+ * return roll id snowflake if exists
+ * @param {import("discord.js").Snowflake} user 
+ * @returns {Promise<boolean | import("discord.js").Snowflake>}
+ */
+export async function roleAssigned(user) {
+    if (!user) throw TypeError(`Parameter "user" cannot be blank`);
+    if (typeof user != `string`) throw TypeError(`Parameter "user" must be a string`);
+    const sql = `SELECT * FROM memberLog WHERE user_id = $1::text`;
+    const result = await query(sql, [user]);
+    if (!result) return false;
+    const record = result.rows[0].roll_assigned;
     return record;
 }
 

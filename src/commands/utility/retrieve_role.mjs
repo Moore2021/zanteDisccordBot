@@ -23,7 +23,7 @@ export async function execute(interaction) {
     const userId = user.id;
     const hasPermission = interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles);
     if (!hasPermission) return interaction.editReply({ content: `I current dont have permission to add role to user`, ephemeral: true });
-    const role = getRoleForUser(userId);
+    const role = await getRoleForUser(userId);
     if (!role) return interaction.editReply({ content: `User has not gotten a roll yet.`, ephemeral: true });
     let result = true;
     try {

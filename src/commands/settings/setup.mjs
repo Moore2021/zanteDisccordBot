@@ -19,8 +19,9 @@ export async function execute(interaction) {
 
     const rollButton = new ButtonBuilder().setCustomId(`rollRandom`).setLabel(`roll`).setStyle(ButtonStyle.Success);
     const jokeButton = new ButtonBuilder().setCustomId(`trollButton`).setLabel(`re-roll`).setStyle(ButtonStyle.Secondary).setDisabled(true);
+    const gachaAddictButton = new ButtonBuilder().setCustomId(`gachaAddictButton`).setLabel(`gacha`).setStyle(ButtonStyle.Danger).setDisabled(false);
 
-    const row = new ActionRowBuilder().addComponents([rollButton, jokeButton]);
+    const row = new ActionRowBuilder().addComponents([rollButton, jokeButton, gachaAddictButton]);
     const rollMessage = await interaction.channel.messages.fetch(messageId);
     if (rollMessage.editable) {
         await rollMessage.edit({ components: [row] });

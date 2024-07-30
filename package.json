@@ -8,6 +8,7 @@
     "lint:check": "eslint src",
     "lint:fix": "eslint src --fix",
     "dev": "node src/index.mjs && echo \"Started dev\"",
+    "start": "pm2 start src/index.mjs --name \"production\" && echo \"Started production\"",
     "loadAppCmds": "node ./deploy-commands.mjs | npx pino-pretty"
   },
   "homepage": "https://github.com/Moore2021/zanteDisccordBot#readme",
@@ -26,6 +27,7 @@
     "pg": "^8.12.0",
     "pg-pool": "^3.6.2",
     "pino": "^9.3.2",
+    "pm2": "^5.4.2",
     "redis": "^4.6.15"
   },
   "devDependencies": {
