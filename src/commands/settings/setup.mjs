@@ -18,8 +18,9 @@ export async function execute(interaction) {
     const messageId = data.clan;
 
     const rollButton = new ButtonBuilder().setCustomId(`rollRandom`).setLabel(`roll`).setStyle(ButtonStyle.Success);
+    const jokeButton = new ButtonBuilder().setCustomId(`trollButton`).setLabel(`re-roll`).setStyle(ButtonStyle.Secondary).setDisabled(true);
 
-    const row = new ActionRowBuilder().addComponents(rollButton);
+    const row = new ActionRowBuilder().addComponents([rollButton, jokeButton]);
     const rollMessage = await interaction.channel.messages.fetch(messageId);
     if (rollMessage.editable) {
         await rollMessage.edit({ components: [row] });
