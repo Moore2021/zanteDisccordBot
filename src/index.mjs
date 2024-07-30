@@ -75,6 +75,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
             return await interaction.editReply({ content: `Sorry, but the role has been edited or removed\nRarity drawn: **\`${randomRole.rarity}\`**`, ephemeral: true });
         }
     }
+
     if (!interaction.isChatInputCommand()) return;
     const command = interaction.client.commands.get(interaction.commandName);
 

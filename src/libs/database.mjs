@@ -71,14 +71,14 @@ export async function getRoleForUser(user) {
 /**
  * return roll id snowflake if exists
  * @param {import("discord.js").Snowflake} user 
- * @returns {Promise<boolean | import("discord.js").Snowflake>}
+ * @returns {Promise<boolean>}
  */
 export async function roleAssigned(user) {
     if (!user) throw TypeError(`Parameter "user" cannot be blank`);
     if (typeof user != `string`) throw TypeError(`Parameter "user" must be a string`);
     const sql = `SELECT * FROM memberLog WHERE user_id = $1::text`;
     const result = await query(sql, [user]);
-    if (!result) return false;
+    if (!result || result.rowCount == 0) return false;
     const record = result.rows[0].roll_assigned;
     return record;
 }
