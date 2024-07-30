@@ -9,7 +9,8 @@
     "lint:fix": "eslint src --fix",
     "dev": "node src/index.mjs && echo \"Started dev\"",
     "start": "pm2 start src/index.mjs --name \"production\" && echo \"Started production\"",
-    "loadAppCmds": "node ./deploy-commands.mjs | npx pino-pretty"
+    "loadAppCmds": "node ./deploy-commands.mjs | npx pino-pretty",
+    "dbSetup": "node ./databaseSetup.mjs"
   },
   "homepage": "https://github.com/Moore2021/zanteDisccordBot#readme",
   "engines": {
