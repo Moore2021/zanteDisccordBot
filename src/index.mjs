@@ -3,7 +3,7 @@ import { config } from "./configs/config.mjs";
 import { commands } from "./commands/commands.mjs";
 import { default as getRole, getRarities } from "./configs/roles.mjs";
 import { default as query, roleAssigned, updateRecord, validateUser } from "./libs/database.mjs";
-import { belowStart } from "./libs/getRoles.mjs";
+import { belowStart, compare, getRoleSections } from "./libs/getRoles.mjs";
 
 const client = new Client({
     intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.GuildMembers],
@@ -15,6 +15,68 @@ client.dbQuery = (text, values) => query(text, values);
 
 client.once(Events.ClientReady, () => {
     console.log(`Discord bot is ready! 🤖`);
+});
+
+client.on(Events.GuildRoleUpdate, async (oldRole, newRole) => {
+
+    if (!oldRole || !newRole) return;
+
+    const guild = newRole.guild;
+    const roleSections = getRoleSections(guild);
+    if (newRole.id === roleSections.MYTHIC_START.id || newRole.id === roleSections.MYTHIC_END.id) return;
+    if (newRole.id === roleSections.LEGENDARY_START.id || newRole.id === roleSections.LEGENDARY_END.id) return;
+    if (newRole.id === roleSections.EPIC_START.id || newRole.id === roleSections.EPIC_END.id) return;
+    if (newRole.id === roleSections.UNCOMMON_START.id || newRole.id === roleSections.UNCOMMON_END.id) return;
+    if (newRole.id === roleSections.COMMON_START.id || newRole.id === roleSections.COMMON_END.id) return;
+
+    if (oldRole.position === newRole.position) return;
+    if (!guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles)) return;
+
+    const roleColors = {
+        "MYTHIC": `#d0021b`,
+        "LEGENDARY": `#f8e71c`,
+        "EPIC": `#9013fe`,
+        "UNCOMMON": `#000000`,
+        "COMMON": `#317062`,
+    };
+
+    const botsHighestRole = guild.members.me.roles.highest;
+    const roleLowerThanHighest = belowStart(newRole.id, botsHighestRole, guild);
+    if (!roleLowerThanHighest) return;
+    const isMythic = compare(newRole, roleSections.MYTHIC_START, roleSections.MYTHIC_END, guild);
+    if (!isMythic) {
+        const isLegendary = compare(newRole, roleSections.LEGENDARY_START, roleSections.LEGENDARY_END, guild);
+        if (!isLegendary) {
+            const isEpic = compare(newRole, roleSections.EPIC_START, roleSections.EPIC_END, guild);
+            if (!isEpic) {
+                const isUncommon = compare(newRole, roleSections.UNCOMMON_START, roleSections.UNCOMMON_END, guild);
+                if (!isUncommon) {
+                    const isCommon = compare(newRole, roleSections.COMMON_START, roleSections.COMMON_END, guild);
+                    if (isCommon != null) {
+                        // Role is Common
+                        const correctColor = newRole.color == roleColors.COMMON;
+                        if (!correctColor) return await newRole.setColor(roleColors.COMMON);
+                    }
+                } else {
+                    // Role is Uncommon
+                    const correctColor = newRole.color == roleColors.UNCOMMON;
+                    if (!correctColor) return await newRole.setColor(roleColors.UNCOMMON);
+                }
+            } else {
+                // Role is Epic
+                const correctColor = newRole.color == roleColors.EPIC;
+                if (!correctColor) return await newRole.setColor(roleColors.EPIC);
+            }
+        } else {
+            // Role is Legendary
+            const correctColor = newRole.color == roleColors.LEGENDARY;
+            if (!correctColor) return await newRole.setColor(roleColors.LEGENDARY);
+        }
+    } else {
+        // Role is Mythic
+        const correctColor = newRole.color == roleColors.MYTHIC;
+        if (!correctColor) return await newRole.setColor(roleColors.MYTHIC);
+    }
 });
 
 client.on(Events.GuildMemberAdd, async (member) => {
@@ -37,7 +99,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton()) {
-        await interaction.deferReply({ ephemeral: true })
+        await interaction.deferReply({ ephemeral: true });
         const guild = interaction.guild;
         if (interaction.customId === `gachaAddictButton`) {
             if (!guild.members.me.permissionsIn(interaction.channel).has(PermissionFlagsBits.ManageRoles)) return await interaction.editReply({ content: `I dont have permissions to add the role to you rn try again later.`, ephemeral: true });

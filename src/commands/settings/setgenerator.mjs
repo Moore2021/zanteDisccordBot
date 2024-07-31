@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits } from "discord.js";
 import { writeFile, readFileSync } from "node:fs";
+import { config } from "../../configs/config.mjs";
 
 export const data = new SlashCommandBuilder()
   .setName(`setgenerator`)
@@ -14,7 +15,8 @@ export const data = new SlashCommandBuilder()
  */
 export async function execute(interaction) {
   await interaction.deferReply({ ephemeral: true });
-  const fileName = `./src/configs/message-ids.json`;
+
+  const fileName = config.DEV_MODE ? `./src/configs/message-ids-DEV.json` : `./src/configs/message-ids.json`;
   const messageId = interaction.options.getString(`message_id`, true);
 
   const testMessage = await interaction.channel.messages.fetch(messageId);

@@ -1,3 +1,6 @@
+// eslint-disable-next-line no-unused-vars
+import { Guild, Role } from "discord.js";
+
 /**
  *
  * @param {string} rarity
@@ -5,6 +8,19 @@
  * @returns {Collection<string,Role>}
  */
 export function getRoles(rarity, guild) {
+
+    const roleSections = getRoleSections(guild);
+
+    const section = { start: `${rarity}_START`, end: `${rarity}_END` };
+    return guild.roles.cache.filter(role => compare(role, roleSections[section.start], roleSections[section.end], guild));
+}
+
+/**
+ * Return roles for the sections
+ * @param {Guild} guild 
+ * @returns {{MYTHIC_START:Role,MYTHIC_END:Role,LEGENDARY_START:Role,LEGENDARY_END:Role,EPIC_START:Role,EPIC_END:Role,UNCOMMON_START:Role,UNCOMMON_END:Role,COMMON_START:Role, COMMON_END:Role}}
+ */
+export function getRoleSections(guild) {
     const roleSections = {
         MYTHIC_START: guild.roles.cache.get(`1266828973984317490`),
         MYTHIC_END: guild.roles.cache.get(`1266858490157207777`),
@@ -17,11 +33,8 @@ export function getRoles(rarity, guild) {
         COMMON_START: guild.roles.cache.get(`1266829217966985278`),
         COMMON_END: guild.roles.cache.get(`1266858918374670336`),
     };
-
-    const section = { start: `${rarity}_START`, end: `${rarity}_END` };
-    return guild.roles.cache.filter(role => compare(role, roleSections[section.start], roleSections[section.end], guild));
+    return roleSections;
 }
-
 /**
  * Negative number if the first role's position is lower (second role's is higher)
  * @param {import("discord.js").RoleResolvable} role1

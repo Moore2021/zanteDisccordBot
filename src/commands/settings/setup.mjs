@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 import { readFileSync } from "node:fs";
+import { config } from "../../configs/config.mjs";
 
 export const data = new SlashCommandBuilder()
     .setName(`setup`)
@@ -12,7 +13,7 @@ export const data = new SlashCommandBuilder()
  * @param {ChatInputCommandInteraction} interaction 
  */
 export async function execute(interaction) {
-    const fileName = `./src/configs/message-ids.json`;
+    const fileName = config.DEV_MODE ? `./src/configs/message-ids-DEV.json` : `./src/configs/message-ids.json`;
     const file = readFileSync(fileName, { encoding: `utf8`, flag: `r` });
     const data = JSON.parse(file);
     const messageId = data.clan;
